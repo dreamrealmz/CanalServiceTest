@@ -5,5 +5,5 @@
 - docker-compose up
 
 # при контейнеров впервые 
-- docker exec -it preapproval_web_1 python manage.py migrate
-- docker exec -it preapproval_web_1 python manage.py createsuperuser
+- docker exec -it <название контейнера>_web_1 python manage.py migrate
+- docker exec -it <название контейнера>_web_1 python manage.py createsuperuser
