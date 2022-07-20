@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:latest
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - .db_data:/var/lib/postgresql
+    ports:
+      - 54321:5432
+
+  redis:
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    depends_on:
+      - db
+    command:
+      --requirepass "redis_pass"
+
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0:8000
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend/:/usr/backend/django_app/
+    depends_on:
+      - redis
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A django_app worker --loglevel=info -B
+    restart: always
+    volumes:
+      - ./backend/:/usr/backend/django_app/
+    env_file:
+      - ./.env
+    depends_on:
+      - web
+
+  bot:
+    build:
+      context: ./tg_bot
+      dockerfile: Dockerfile
+    command: python main.py
+    restart: always
+    volumes:
+      - ./tg_bot/:/usr/tg_bot/
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
